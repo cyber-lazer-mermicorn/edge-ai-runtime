@@ -6,27 +6,39 @@ export class ModelLoader {
   private models: Map<string, ort.InferenceSession> = new Map();
 
   static getInstance(): ModelLoader {
-    if (!ModelLoader.instance) {
-      ModelLoader.instance = new ModelLoader();
+    try {
+      if (!ModelLoader.instance) {
+        ModelLoader.instance = new ModelLoader();
+      }
+      return ModelLoader.instance;
+    } catch (error: any) {
+      throw new Error(`Get instance error: ${error?.message || 'Unknown error'}`);
     }
-    return ModelLoader.instance;
   }
 
   async loadModel(name: string, modelUrl: string): Promise<ort.InferenceSession> {
-    if (this.models.has(name)) {
-      return this.models.get(name)!;
+    try {
+      if (this.models.has(name)) {
+        return this.models.get(name)!;
+      }
+
+      const session = await ort.InferenceSession.create(modelUrl, {
+        executionProviders: ['webgl', 'wasm'],
+      });
+
+      this.models.set(name, session);
+      return session;
+    } catch (error: any) {
+      throw new Error(`Load model error: ${error?.message || 'Unknown error'}`);
     }
-
-    const session = await ort.InferenceSession.create(modelUrl, {
-      executionProviders: ['webgl', 'wasm'],
-    });
-
-    this.models.set(name, session);
-    return session;
   }
 
   getModel(name: string): ort.InferenceSession | undefined {
-    return this.models.get(name);
+    try {
+      return this.models.get(name);
+    } catch (error: any) {
+      throw new Error(`Get model error: ${error?.message || 'Unknown error'}`);
+    }
   }
 }
 
@@ -35,27 +47,35 @@ export class TextClassifier {
   private session: ort.InferenceSession | null = null;
 
   async initialize() {
-    const loader = ModelLoader.getInstance();
-    this.session = await loader.loadModel('bert', '/models/bert.onnx');
+    try {
+      const loader = ModelLoader.getInstance();
+      this.session = await loader.loadModel('bert', '/models/bert.onnx');
+    } catch (error: any) {
+      throw new Error(`Initialize error: ${error?.message || 'Unknown error'}`);
+    }
   }
 
   async classify(text: string): Promise<{ label: string; confidence: number }[]> {
-    if (!this.session) {
-      throw new Error('Model not initialized');
+    try {
+      if (!this.session) {
+        throw new Error('Model not initialized');
+      }
+
+      // Tokenize text (simplified)
+      const tokens = this.tokenize(text);
+
+      // Run inference
+      const inputTensor = new ort.Tensor('int64', tokens, [1, tokens.length]);
+      const results = await this.session.run({ input_ids: inputTensor });
+
+      // Process results
+      return [
+        { label: 'positive', confidence: 0.85 },
+        { label: 'negative', confidence: 0.15 },
+      ];
+    } catch (error: any) {
+      throw new Error(`Classify error: ${error?.message || 'Unknown error'}`);
     }
-
-    // Tokenize text (simplified)
-    const tokens = this.tokenize(text);
-
-    // Run inference
-    const inputTensor = new ort.Tensor('int64', tokens, [1, tokens.length]);
-    const results = await this.session.run({ input_ids: inputTensor });
-
-    // Process results
-    return [
-      { label: 'positive', confidence: 0.85 },
-      { label: 'negative', confidence: 0.15 },
-    ];
   }
 
   private tokenize(text: string): BigInt64Array {
@@ -69,24 +89,32 @@ export class ObjectDetector {
   private session: ort.InferenceSession | null = null;
 
   async initialize() {
-    const loader = ModelLoader.getInstance();
-    this.session = await loader.loadModel('yolo', '/models/yolo.onnx');
+    try {
+      const loader = ModelLoader.getInstance();
+      this.session = await loader.loadModel('yolo', '/models/yolo.onnx');
+    } catch (error: any) {
+      throw new Error(`Initialize error: ${error?.message || 'Unknown error'}`);
+    }
   }
 
   async detect(imageData: ImageData): Promise<{ label: string; confidence: number; bbox: number[] }[]> {
-    if (!this.session) {
-      throw new Error('Model not initialized');
+    try {
+      if (!this.session) {
+        throw new Error('Model not initialized');
+      }
+
+      // Run inference
+      const inputTensor = new ort.Tensor('float32', imageData.data, [1, 3, 640, 640]);
+      const results = await this.session.run({ images: inputTensor });
+
+      // Process results
+      return [
+        { label: 'person', confidence: 0.92, bbox: [100, 100, 200, 400] },
+        { label: 'car', confidence: 0.88, bbox: [300, 200, 500, 400] },
+      ];
+    } catch (error: any) {
+      throw new Error(`Detect error: ${error?.message || 'Unknown error'}`);
     }
-
-    // Run inference
-    const inputTensor = new ort.Tensor('float32', imageData.data, [1, 3, 640, 640]);
-    const results = await this.session.run({ images: inputTensor });
-
-    // Process results
-    return [
-      { label: 'person', confidence: 0.92, bbox: [100, 100, 200, 400] },
-      { label: 'car', confidence: 0.88, bbox: [300, 200, 500, 400] },
-    ];
   }
 }
 
@@ -101,17 +129,29 @@ export class EdgeAIManager {
   }
 
   async initialize() {
-    await Promise.all([
-      this.classifier.initialize(),
-      this.detector.initialize(),
-    ]);
+    try {
+      await Promise.all([
+        this.classifier.initialize(),
+        this.detector.initialize(),
+      ]);
+    } catch (error: any) {
+      throw new Error(`Initialize error: ${error?.message || 'Unknown error'}`);
+    }
   }
 
   async classifyText(text: string) {
-    return this.classifier.classify(text);
+    try {
+      return this.classifier.classify(text);
+    } catch (error: any) {
+      throw new Error(`Classify text error: ${error?.message || 'Unknown error'}`);
+    }
   }
 
   async detectObjects(imageData: ImageData) {
-    return this.detector.detect(imageData);
+    try {
+      return this.detector.detect(imageData);
+    } catch (error: any) {
+      throw new Error(`Detect objects error: ${error?.message || 'Unknown error'}`);
+    }
   }
 }
