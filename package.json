@@ -1,0 +1,21 @@
+{
+  "name": "edge-ai-runtime",
+  "version": "1.0.0",
+  "description": "Browser-based AI inference with zero latency",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "14.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "onnxruntime-web": "^1.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "typescript": "^5.3.0"
+  }
+}
