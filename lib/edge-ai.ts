@@ -104,7 +104,7 @@ export class ObjectDetector {
       }
 
       // Run inference
-      const inputTensor = new ort.Tensor('float32', imageData.data, [1, 3, 640, 640]);
+      const inputTensor = new ort.Tensor('float32', Float32Array.from(imageData.data), [1, 3, 640, 640]);
       const results = await this.session.run({ images: inputTensor });
 
       // Process results
